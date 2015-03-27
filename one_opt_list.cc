@@ -33,5 +33,5 @@ void OneOptList::append (
         const QString name, const QString stgs_group,
         const QString description, const QStringList default_val)
 {
-    append (OneOpt::create (name, stgs_group, description, default_val));
+    this->QList<OneOpt>::append (OneOpt::create (name, stgs_group, description, default_val));
 }
