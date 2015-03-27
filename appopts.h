@@ -12,8 +12,30 @@
 
 #include <appopts/appopts-config.h>
 
-//! brief description
-class APPOPTS_EXPORT AppOpts {
+#include <QMap>
+#include <QString>
+#include <QStringList>
+
+class UserMsg;
+class PerSt;
+
+//! Application options.
+class APPOPTS_EXPORT AppOpts : public QMap<QString,QStringList> {
+
+
+private:
+
+    //! copy constructor
+    AppOpts (const AppOpts & other) :
+        system_file_(other.system_file_),
+        user_file_(other.user_file_),
+        local_file_(other.local_file_)
+    {}
+
+    //! assignment operator
+    AppOpts& operator=( const AppOpts& ) {
+        return *this;
+    }
 
 public:
 
@@ -23,10 +45,82 @@ public:
     //! Destructor.
     virtual ~AppOpts();
 
+    //! Load options from files.
+    bool
+    loadFromAll (
+            UserMsg & um,
+            const QString & s_app_name = QString());
+
+    //! Load options from a file.
+    bool
+    loadFile (
+            const QString & s_file,
+            PerSt ** out_pers,
+            UserMsg & um);
+
+    //! Set a value.
+    void
+    setValue (
+            const QString & s_key,
+            const QString & s_value);
+
+    //! Set a value.
+    void
+    setValue (
+            const QString & s_key,
+            const QStringList & sl_value);
+
+    //! Append a value.
+    void
+    appendValue (
+            const QString & s_key,
+            const QString & s_value);
+
+    //! Append values.
+    void
+    appendValues (
+            const QString & s_key,
+            const QStringList & sl_values);
+
+    //! Set current file.
+    bool
+    setCurrentConfig (
+            const QString & s_file,
+            UserMsg & um);
+
+    //! Get a boolean value.
+    bool
+    valueB (
+            const QString & s_name,
+            bool b_default = false) const;
+
+    //! Get a string value.
+    QString
+    valueS (
+            const QString & s_name,
+            const QString & s_default = QString()) const;
+
+    //! Get an integer value.
+    int
+    valueI (
+            const QString & s_name,
+            int i_default = 0) const;
+
+public:
+
+    //! Get a proper name starting from a template.
+    static QString
+    cfgFileName (
+            const QString &s_app_name);
+
 protected:
 
 private:
 
+    PerSt * system_file_; /**< configuration file at system level */
+    PerSt * user_file_; /**< configuration file at user level */
+    PerSt * local_file_; /**< configuration file at local level */
+    PerSt * current_file_; /**< current used for saving things */
 };
 
 #endif // GUARD_APPOPTS_H_INCLUDE

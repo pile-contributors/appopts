@@ -9,7 +9,7 @@ include(pile_support)
 
 # initialize this module
 macro    (appoptsInit
-          ref_cnt_use_mode)
+          appopts_use_mode)
 
     # default name
     if (NOT APPOPTS_INIT_NAME)
@@ -31,8 +31,8 @@ macro    (appoptsInit
         "${APPOPTS_INIT_NAME}"
         "0;0;1;d"
         "ON"
-        "${ref_cnt_use_mode}"
-        ""
+        "${appopts_use_mode}"
+        "UserMsg;PerSt"
         "category1"
         "tag1;tag2")
 
