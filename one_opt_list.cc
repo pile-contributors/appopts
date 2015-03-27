@@ -10,6 +10,7 @@
 #include "appopts.h"
 #include "appopts-private.h"
 #include "one_opt.h"
+#include "one_opt_list.h"
 
 #include <usermsg/usermsg.h>
 #include <usermsg/usermsgman.h>
@@ -26,3 +27,11 @@
  *
  *
  */
+
+
+void OneOptList::append (
+        const QString name, const QString stgs_group,
+        const QString description, const QStringList default_val)
+{
+    append (OneOpt::create (name, stgs_group, description, default_val));
+}

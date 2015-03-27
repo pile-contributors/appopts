@@ -25,6 +25,12 @@ class APPOPTS_EXPORT OneOptList : public QList<OneOpt> {
 
 public:
 
+    void
+    append (
+            const QString name,
+            const QString stgs_group = "General",
+            const QString description = QString(),
+            const QStringList default_val = QStringList());
 
 protected:
 
