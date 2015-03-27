@@ -18,9 +18,14 @@ macro    (appoptsInit
 
     # compose the list of headers and sources
     set(APPOPTS_HEADERS
-        "appopts.h")
+        appopts.h
+        one_opt.h
+        one_opt_list.h)
+
     set(APPOPTS_SOURCES
-        "appopts.cc")
+        appopts.cc
+        one_opt.cc
+        one_opt_list.cc)
 
     pileSetSources(
         "${APPOPTS_INIT_NAME}"

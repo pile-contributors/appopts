@@ -9,6 +9,8 @@
 
 #include "appopts.h"
 #include "appopts-private.h"
+#include "one_opt.h"
+#include "one_opt_list.h"
 
 #include <usermsg/usermsg.h>
 #include <usermsg/usermsgman.h>
@@ -260,6 +262,80 @@ bool AppOpts::loadFile (const QString & s_file, PerSt ** out_pers,
         *out_pers = user_file;
     }
 
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool AppOpts::readValueFromPerSt (
+        PerSt * perst, const OneOpt & opt, UserMsg & um)
+{
+    bool b_ret = false;
+    APPOPTS_TRACE_ENTRY;
+
+    if (perst != NULL) {
+        if (opt.group_.isEmpty()) {
+            perst->beginGroup (opt.group_);
+        }
+
+        if (perst->hasKey (opt.name_)) {
+            QStringList sl = perst->valueSList (opt.name_);
+            insert (opt.name_, sl);
+            b_ret = true;
+        }
+
+        if (opt.group_.isEmpty()) {
+            perst->endGroup (opt.group_);
+        }
+    }
+
+    APPOPTS_TRACE_EXIT;
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool AppOpts::readValueFromCfgs (const OneOpt & opt, UserMsg & um)
+{
+    APPOPTS_TRACE_ENTRY;
+
+    bool b_ret = true;
+    for (;;) {
+
+        b_ret = b_ret & readValueFromPerSt (system_file_, opt, um);
+        b_ret = b_ret & readValueFromPerSt (user_file_, opt, um);
+        b_ret = b_ret & readValueFromPerSt (local_file_, opt, um);
+
+        if (!b_ret && opt.required_) {
+            um.addErr (QString (
+                           "Required option %1 not present in "
+                           "configuration file(s).")
+                       .arg (opt.name_));
+            b_ret = false;
+        } else {
+            b_ret = true;
+        }
+
+        break;
+    }
+
+    APPOPTS_TRACE_EXIT;
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool AppOpts::readMultipleFromCfgs (const OneOptList & list, UserMsg & um)
+{
+    APPOPTS_TRACE_ENTRY;
+
+    bool b_ret = true;
+
+    foreach (const OneOpt & opt, list) {
+        b_ret = b_ret & readValueFromCfgs (opt, um);
+    }
+
+    APPOPTS_TRACE_EXIT;
     return b_ret;
 }
 /* ========================================================================= */

@@ -18,6 +18,8 @@
 
 class UserMsg;
 class PerSt;
+class OneOpt;
+class OneOptList;
 
 //! Application options.
 class APPOPTS_EXPORT AppOpts : public QMap<QString,QStringList> {
@@ -56,6 +58,18 @@ public:
     loadFile (
             const QString & s_file,
             PerSt ** out_pers,
+            UserMsg & um);
+
+    //! Looks into existing files for values matching the descriptions.
+    bool
+    readValueFromCfgs (
+            const OneOpt & opt,
+            UserMsg & um);
+
+    //! Looks into existing files for values matching the description.
+    bool
+    readMultipleFromCfgs (
+            const OneOptList & optlist,
             UserMsg & um);
 
     //! Set a value.
@@ -115,12 +129,20 @@ public:
 
 protected:
 
+
 private:
+
+    bool
+    readValueFromPerSt (
+            PerSt *perst,
+            const OneOpt & opt,
+            UserMsg & um);
 
     PerSt * system_file_; /**< configuration file at system level */
     PerSt * user_file_; /**< configuration file at user level */
     PerSt * local_file_; /**< configuration file at local level */
     PerSt * current_file_; /**< current used for saving things */
+
 };
 
 #endif // GUARD_APPOPTS_H_INCLUDE
