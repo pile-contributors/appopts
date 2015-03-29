@@ -29,7 +29,7 @@
  * list of strings.
  */
 
-#define CFG_GROUP_GENERAL "General"
+#define CFG_GROUP_GENERAL "general"
 #define CFG_PERST_VERSION "perst_version"
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
@@ -209,7 +209,7 @@ bool AppOpts::loadFromAll (UserMsg & um, const QString & s_app_name)
 
 /* ------------------------------------------------------------------------- */
 /**
- * Creates a PerSt instance from our file and checks that a `General`
+ * Creates a PerSt instance from our file and checks that a `general`
  * section exists and it contains a proper `` version string that we are safe
  * to interpret.
  *

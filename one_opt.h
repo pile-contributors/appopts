@@ -34,7 +34,7 @@ public:
     static OneOpt
     create (
             const QString name,
-            const QString stgs_group = "General",
+            const QString stgs_group = "general",
             const QString description = QString(),
             const QStringList default_val = QStringList());
 
