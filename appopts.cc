@@ -25,7 +25,7 @@
 /**
  * @class AppOpts
  *
- * This class holds a list of key-value pairs, where values are ultimatelly
+ * This class holds a list of key-value pairs, where values are ultimately
  * list of strings.
  */
 
@@ -41,7 +41,7 @@
 
 /* ------------------------------------------------------------------------- */
 /**
- * Detailed description for constructor.
+ * Creates a valid instance.
  */
 AppOpts::AppOpts() : QMap<QString,QStringList>(),
     system_file_(NULL),
@@ -57,7 +57,7 @@ AppOpts::AppOpts() : QMap<QString,QStringList>(),
 
 /* ------------------------------------------------------------------------- */
 /**
- * Detailed description for destructor.
+ * Releases all resources associated with this instance.
  */
 AppOpts::~AppOpts()
 {
@@ -91,7 +91,7 @@ AppOpts::~AppOpts()
 /* ------------------------------------------------------------------------- */
 /**
  * The method will replace spaces by `_` and will make all letters lower-case.
- * If input template is empty then the result is `config`.
+ * If input template is empty then the result is `config`. 
  *
  * @param s_app_name Input template.
  * @return the name of the config file without extension.
@@ -112,14 +112,16 @@ QString AppOpts::cfgFileName (const QString & s_app_name)
 /**
  * The function will either get the name of the application or use provided
  * string. The spaces are replaced by `_` and all letters are lower-cased.
+ * See `cfgFileName()` for details.
  *
  * The name that results is then used to search for a configuration file
  * in three locations: system data directory, user home directory and
- * current directory. If found, the file is immediatly loaded in this order.
+ * current directory. If found, the file is immediately loaded in this order.
  *
  * The reverse order (current dir, user home, system data) is used to decide
  * where to save changed settings.
  *
+ * @param um structure used to show messages.
  * @param s_app_name the name to use for file name.
  * @return true if everything went fine.
  */
@@ -210,12 +212,12 @@ bool AppOpts::loadFromAll (UserMsg & um, const QString & s_app_name)
 /* ------------------------------------------------------------------------- */
 /**
  * Creates a PerSt instance from our file and checks that a `general`
- * section exists and it contains a proper `` version string that we are safe
- * to interpret.
+ * section exists and it contains a proper `perst_version` version
+ * string that we are safe to interpret.
  *
  * @param s_file Input file's path.
  * @param out_pers Resulted PerSt object, if any.
- * @param um Communication device.
+ * @param um communication device.
  * @return true if everything went fine.
  */
 bool AppOpts::loadFile (const QString & s_file, PerSt ** out_pers,
@@ -246,7 +248,7 @@ bool AppOpts::loadFile (const QString & s_file, PerSt ** out_pers,
                        .arg (APPOPTS_VERSION_STRING));
         }
 
-        b_ret = user_file->endGroup   (CFG_GROUP_GENERAL);
+        b_ret = user_file->endGroup (CFG_GROUP_GENERAL);
         if (!b_ret) break;
 
         b_ret = true;
@@ -267,6 +269,22 @@ bool AppOpts::loadFile (const QString & s_file, PerSt ** out_pers,
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The method will honor variable's group and try to locate the value
+ * in given persistent storage.
+ * If found the variable and the value are inserted into local storage,
+ * replacing any value that was previously there. The name of the option
+ * will be a combination of the name of the group and the name of the variable:
+ *
+ *     group/variable
+ *
+ * @note Default value is not used if the variable is not found.
+ *
+ * @param perst the object to search (can be NULL)
+ * @param opt   definition of the variable to search
+ * @param um    communication object
+ * @return true if the variable was found
+ */
 bool AppOpts::readValueFromPerSt (
         PerSt * perst, const OneOpt & opt, UserMsg & um)
 {
@@ -274,17 +292,22 @@ bool AppOpts::readValueFromPerSt (
     APPOPTS_TRACE_ENTRY;
 
     if (perst != NULL) {
-        if (opt.group_.isEmpty()) {
+        if (!opt.group_.isEmpty()) {
             perst->beginGroup (opt.group_);
         }
 
         if (perst->hasKey (opt.name_)) {
             QStringList sl = perst->valueSList (opt.name_);
-            insert (opt.name_, sl);
+            insert (opt.fullName(), sl);
+            um.addDbgInfo( (QString (
+                                "Option %1 found in "
+                                "configuration file %2.")
+                            .arg(opt.name_)
+                            .arg(perst->location())));
             b_ret = true;
         }
 
-        if (opt.group_.isEmpty()) {
+        if (!opt.group_.isEmpty()) {
             perst->endGroup (opt.group_);
         }
     }
@@ -295,23 +318,42 @@ bool AppOpts::readValueFromPerSt (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The method will honor variable's group and try to locate the value
+ * in system, user and local config files (represented as persistent storage
+ * inside).
+ * If found the variable and the value are inserted into local storage,
+ * replacing any value that was previously there.
+ *
+ * If a variable is not required and is also not found in the configuration
+ * files the default value is used.
+ *
+ * @param opt   definition of the variable to search
+ * @param um    communication object
+ * @return true if the variable was found in at least one file
+ */
 bool AppOpts::readValueFromCfgs (const OneOpt & opt, UserMsg & um)
 {
     APPOPTS_TRACE_ENTRY;
 
-    bool b_ret = true;
+    bool b_ret = false;
     for (;;) {
 
-        b_ret = b_ret & readValueFromPerSt (system_file_, opt, um);
-        b_ret = b_ret & readValueFromPerSt (user_file_, opt, um);
-        b_ret = b_ret & readValueFromPerSt (local_file_, opt, um);
+        b_ret = b_ret | readValueFromPerSt (system_file_, opt, um);
+        b_ret = b_ret | readValueFromPerSt (user_file_, opt, um);
+        b_ret = b_ret | readValueFromPerSt (local_file_, opt, um);
 
-        if (!b_ret && opt.required_) {
-            um.addErr (QString (
-                           "Required option %1 not present in "
-                           "configuration file(s).")
-                       .arg (opt.name_));
-            b_ret = false;
+        if (!b_ret) {
+            if (opt.required_) {
+                um.addErr (QString (
+                               "Required option %1 not present in "
+                               "configuration file(s).")
+                           .arg (opt.name_));
+                b_ret = false;
+            } else {
+                QStringList sl = opt.default_;
+                insert (opt.fullName(), sl);
+            }
         } else {
             b_ret = true;
         }
@@ -325,6 +367,19 @@ bool AppOpts::readValueFromCfgs (const OneOpt & opt, UserMsg & um)
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The method simply iterates the list of options and uses
+ * `readValueFromCfgs()` to get their values and insert them into its own
+ * option tree.
+ *
+ * This is useful if the application defines at startup a list of options
+ * that it expects, then initializes the AppOpts instance and makes sure
+ * that all required options are present.
+ *
+ * @param list the list of variables to search
+ * @param um communication object
+ * @return true if all required variables were found
+ */
 bool AppOpts::readMultipleFromCfgs (const OneOptList & list, UserMsg & um)
 {
     APPOPTS_TRACE_ENTRY;
@@ -341,6 +396,15 @@ bool AppOpts::readMultipleFromCfgs (const OneOptList & list, UserMsg & um)
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. This
+ * overload will create a list with a single member and use that as a value.
+ *
+ * Any value that was previously assigned to this option will be overwritten.
+ *
+ * @param s_key the name of the variable to change
+ * @param s_value a string value to use
+ */
 void AppOpts::setValue (
         const QString & s_key, const QString & s_value)
 {
@@ -349,6 +413,15 @@ void AppOpts::setValue (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings.
+ * The \b sl_value argument is directly used in internal map.
+ *
+ * Any value that was previously assigned to this option will be overwritten.
+ *
+ * @param s_key the name of the variable to change
+ * @param s_value a string value to use
+ */
 void AppOpts::setValue (
         const QString & s_key, const QStringList & sl_value)
 {
@@ -357,6 +430,15 @@ void AppOpts::setValue (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. This
+ * overload will either create a list with a single member and use that as
+ * a value if the option is not found or append \b s_value to internal list
+ * associated with this option.
+ *
+ * @param s_key the name of the variable to change
+ * @param s_value a string value to use
+ */
 void AppOpts::appendValue (
         const QString & s_key, const QString & s_value)
 {
@@ -365,13 +447,19 @@ void AppOpts::appendValue (
     if (found == endi) {
         insert (s_key, QStringList(s_value));
     } else {
-        //QStringList s_found = ;
         found.value().append (s_value);
     }
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. If the option
+ * is already present inside t6he two lists will be merged.
+ *
+ * @param s_key the name of the variable to change
+ * @param s_value a string value to use
+ */
 void AppOpts::appendValues (
         const QString & s_key, const QStringList & sl_values)
 {
@@ -380,13 +468,35 @@ void AppOpts::appendValues (
     if (found == endi) {
         insert (s_key, sl_values);
     } else {
-        //QStringList s_found = ;
         found.value().append (sl_values);
     }
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * Current config file is meaningful if the values (maybe adjusted by the
+ * application) need to be saved back to a file.
+ *
+ * The \b s_file may be one of the following keywords:
+ * - system
+ * - user
+ * - local
+ * In this case, if the coresponding persistent object is valid, the
+ * file is used as current file.
+ *
+ * If \b s_file is an actual file that is different from the files
+ * used as system, user and local files the file is loaded and
+ * made current.
+ *
+ * A previous current file that is not one of the three types
+ * (loaded by a previous call to `setCurrentConfig()`)
+ * will be discarded by this method.
+ *
+ * @param s_file keyword or the path and name of the file to make current
+ * @param um communication object
+ * @return true if everything went well
+ */
 bool AppOpts::setCurrentConfig (const QString & s_file, UserMsg & um)
 {
     bool b_ret = false;
@@ -468,6 +578,16 @@ bool AppOpts::setCurrentConfig (const QString & s_file, UserMsg & um)
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. For boolean
+ * values first entry in the list is used and the string is compared against
+ * `FALSE`, `false` and `0`; if the string matches the value is false,
+ * otherwise it is true.
+ *
+ * @param s_name name of the option to retreive
+ * @param b_default default value if the option is not found
+ * @return the result
+ */
 bool AppOpts::valueB (
         const QString & s_name, bool b_default) const
 {
@@ -480,16 +600,26 @@ bool AppOpts::valueB (
         if (sl_result.count () == 0) {
             return b_default;
         } else {
-            return
-                    (sl_result.at (0) == "TRUE") ||
-                    (sl_result.at (0) == "true") ||
-                    (sl_result.at (0) == "1");
+            return !(
+                    (sl_result.at (0) == "FALSE") ||
+                    (sl_result.at (0) == "false") ||
+                    (sl_result.at (0) == "0"));
         }
     }
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. For integer
+ * values first entry in the list is used and converted into integer.
+ * If the conversion fails the default value is returned.
+ *
+ * @param s_name name of the option to retreive
+ * @param i_default default value if the option is not found or
+ *        can't be converted
+ * @return the integer
+ */
 int AppOpts::valueI (
         const QString & s_name, int i_default) const
 {
@@ -515,6 +645,49 @@ int AppOpts::valueI (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. For double
+ * values first entry in the list is used and converted into double.
+ * If the conversion fails the default value is returned.
+ *
+ * @param s_name name of the option to retreive
+ * @param d_default default value if the option is not found or
+ *        can't be converted
+ * @return the number
+ */
+double AppOpts::valueD (
+        const QString & s_name, double d_default) const
+{
+    QMap<QString,QStringList>::const_iterator found = find (s_name);
+    QMap<QString,QStringList>::const_iterator endi = end();
+    if (found == endi) {
+        return d_default;
+    } else {
+        QStringList sl_result = *found;
+        if (sl_result.count () == 0) {
+            return d_default;
+        } else {
+            bool b_ok = false;
+            double result = sl_result.at (0).toDouble (&b_ok);
+            if (!b_ok) {
+                return d_default;
+            } else {
+                return result;
+            }
+        }
+    }
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings. For string
+ * values first entry in the list is used.
+ *
+ * @param s_name name of the option to retreive
+ * @param s_default default value if the option is not found
+ * @return the string that was found
+ */
 QString AppOpts::valueS (
         const QString & s_name, const QString & s_default) const
 {
@@ -528,6 +701,35 @@ QString AppOpts::valueS (
             return s_default;
         } else {
             return sl_result.at (0);
+        }
+    }
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * The class represents values for options as a list of strings.
+ * Entire list is returned if found.
+ *
+ * An empty list is interpreted as a missing value and default list is returned.
+ *
+ * @param s_name name of the option to retreive
+ * @param s_default default value if the option is not found
+ * @return the list that was found
+ */
+QStringList AppOpts::valueSL (
+        const QString & s_name, const QStringList & sl_default) const
+{
+    QMap<QString,QStringList>::const_iterator found = find (s_name);
+    QMap<QString,QStringList>::const_iterator endi = end();
+    if (found == endi) {
+        return sl_default;
+    } else {
+        QStringList sl_result = *found;
+        if (sl_result.count () == 0) {
+            return sl_default;
+        } else {
+            return sl_result;
         }
     }
 }

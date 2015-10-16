@@ -60,13 +60,13 @@ public:
             PerSt ** out_pers,
             UserMsg & um);
 
-    //! Looks into existing files for values matching the descriptions.
+    //! Looks into existing files for requested variable.
     bool
     readValueFromCfgs (
             const OneOpt & opt,
             UserMsg & um);
 
-    //! Looks into existing files for values matching the description.
+    //! Looks into existing files for requested variables.
     bool
     readMultipleFromCfgs (
             const OneOptList & optlist,
@@ -102,7 +102,7 @@ public:
             const QString & s_file,
             UserMsg & um);
 
-    //! Get a boolean value.
+    //! Get a boolean value based on option's name.
     bool
     valueB (
             const QString & s_name,
@@ -114,11 +114,23 @@ public:
             const QString & s_name,
             const QString & s_default = QString()) const;
 
+    //! Get a list of strings.
+    QStringList
+    valueSL (
+            const QString & s_name,
+            const QStringList & sl_default = QStringList()) const;
+
     //! Get an integer value.
     int
     valueI (
             const QString & s_name,
             int i_default = 0) const;
+
+    //! Get an integer value.
+    double
+    valueD (
+            const QString & s_name,
+            double d_default = 0.0) const;
 
 public:
 
@@ -132,6 +144,7 @@ protected:
 
 private:
 
+    //! Uses one Perst instance to find requested option.
     bool
     readValueFromPerSt (
             PerSt *perst,
@@ -144,5 +157,6 @@ private:
     PerSt * current_file_; /**< current used for saving things */
 
 };
+
 
 #endif // GUARD_APPOPTS_H_INCLUDE
