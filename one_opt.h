@@ -13,7 +13,9 @@
 #include <appopts/appopts-config.h>
 
 #include <QMap>
+#include <QList>
 #include <QString>
+#include <QSet>
 #include <QStringList>
 
 class UserMsg;
@@ -166,5 +168,7 @@ inline bool operator== (
 inline bool operator!= (
         const OneOpt& lhs, const OneOpt& rhs){
     return lhs.name() != rhs.name(); }
+
+inline uint qHash(OneOpt key) { return qHash(key.name())*qHash(key.group()); }
 
 #endif // GUARD_APPOPTS_ONEOPT_H_INCLUDE
