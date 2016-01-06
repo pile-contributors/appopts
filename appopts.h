@@ -31,11 +31,16 @@ private:
     AppOpts (const AppOpts & other) :
         system_file_(other.system_file_),
         user_file_(other.user_file_),
-        local_file_(other.local_file_)
+        local_file_(other.local_file_),
+        current_file_(other.current_file_)
     {}
 
     //! assignment operator
-    AppOpts& operator=( const AppOpts& ) {
+    AppOpts& operator=( const AppOpts& other) {
+        system_file_ = other.system_file_;
+        user_file_ = other.user_file_;
+        local_file_ = other.local_file_;
+        current_file_ = other.current_file_;
         return *this;
     }
 
@@ -102,7 +107,7 @@ public:
             const QString & s_file,
             UserMsg & um);
 
-    //! Get a boolean value based on option's name.
+    //! Get a Boolean value based on option's name.
     bool
     valueB (
             const QString & s_name,
@@ -156,6 +161,7 @@ private:
     PerSt * local_file_; /**< configuration file at local level */
     PerSt * current_file_; /**< current used for saving things */
 
+public: virtual void anchorVtable() const;
 };
 
 

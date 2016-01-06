@@ -91,7 +91,7 @@ AppOpts::~AppOpts()
 /* ------------------------------------------------------------------------- */
 /**
  * The method will replace spaces by `_` and will make all letters lower-case.
- * If input template is empty then the result is `config`. 
+ * If input template is empty then the result is `config`.
  *
  * @param s_app_name Input template.
  * @return the name of the config file without extension.
@@ -497,16 +497,16 @@ void AppOpts::appendValues (
  * @param um communication object
  * @return true if everything went well
  */
-bool AppOpts::setCurrentConfig (const QString & s_file, UserMsg & um)
+bool AppOpts::setCurrentConfig (const QString & s_file_input, UserMsg & um)
 {
     bool b_ret = false;
     PerSt * new_current_ = NULL;
-
+    QString s_file = s_file_input;
     for (;;) {
         if (s_file == "system") {
             if (system_file_ == NULL) {
                 um.addErr (QObject::tr(
-                               "System config file was not found; "
+                               "System configuration file was not found; "
                                "it can't be made current."));
                 break;
             }
@@ -514,7 +514,7 @@ bool AppOpts::setCurrentConfig (const QString & s_file, UserMsg & um)
         } else if (s_file == "user") {
             if (user_file_ == NULL) {
                 um.addErr (QObject::tr(
-                               "User config file was not found; "
+                               "User configuration file was not found; "
                                "it can't be made current."));
                 break;
             }
@@ -522,39 +522,39 @@ bool AppOpts::setCurrentConfig (const QString & s_file, UserMsg & um)
         } else if (s_file == "local") {
             if (local_file_ == NULL) {
                 um.addErr (QObject::tr(
-                               "Local config file was not found; "
+                               "Local configuration file was not found; "
                                "it can't be made current."));
                 break;
             }
             new_current_ = local_file_;
         } else if (s_file.isEmpty ()) {
             um.addErr (QObject::tr(
-                           "No file config provided."));
+                           "No configuration file was provided."));
             break;
         } else {
             if (system_file_ != NULL) {
                 if (s_file == system_file_->location()) {
-                    s_file == "system";
+                    s_file = "system";
                     continue;
                 }
             } else if (user_file_ != NULL) {
                 if (s_file == user_file_->location()) {
-                    s_file == "user";
+                    s_file = "user";
                     continue;
                 }
             } else if (local_file_ != NULL) {
                 if (s_file == local_file_->location()) {
-                    s_file == "local";
+                    s_file = "local";
                     continue;
                 }
             } else if (!QFile::exists (s_file)) {
                 um.addErr (QObject::tr(
-                               "Config file does not exist; "
+                               "Configuration file does not exist; "
                                "it can't be made current."));
                 break;
             } else if (!loadFile (s_file, &new_current_, um)) {
                 um.addErr (QObject::tr(
-                               "Config file contains errors and was not loaded; "
+                               "Configuration file contains errors and was not loaded; "
                                "it can't be made current."));
                 break;
             }
@@ -584,7 +584,7 @@ bool AppOpts::setCurrentConfig (const QString & s_file, UserMsg & um)
  * `FALSE`, `false` and `0`; if the string matches the value is false,
  * otherwise it is true.
  *
- * @param s_name name of the option to retreive
+ * @param s_name name of the option to retrieve
  * @param b_default default value if the option is not found
  * @return the result
  */
@@ -615,7 +615,7 @@ bool AppOpts::valueB (
  * values first entry in the list is used and converted into integer.
  * If the conversion fails the default value is returned.
  *
- * @param s_name name of the option to retreive
+ * @param s_name name of the option to retrieve
  * @param i_default default value if the option is not found or
  *        can't be converted
  * @return the integer
@@ -650,7 +650,7 @@ int AppOpts::valueI (
  * values first entry in the list is used and converted into double.
  * If the conversion fails the default value is returned.
  *
- * @param s_name name of the option to retreive
+ * @param s_name name of the option to retrieve
  * @param d_default default value if the option is not found or
  *        can't be converted
  * @return the number
@@ -684,7 +684,7 @@ double AppOpts::valueD (
  * The class represents values for options as a list of strings. For string
  * values first entry in the list is used.
  *
- * @param s_name name of the option to retreive
+ * @param s_name name of the option to retrieve
  * @param s_default default value if the option is not found
  * @return the string that was found
  */
@@ -713,7 +713,7 @@ QString AppOpts::valueS (
  *
  * An empty list is interpreted as a missing value and default list is returned.
  *
- * @param s_name name of the option to retreive
+ * @param s_name name of the option to retrieve
  * @param s_default default value if the option is not found
  * @return the list that was found
  */
@@ -734,3 +734,5 @@ QStringList AppOpts::valueSL (
     }
 }
 /* ========================================================================= */
+
+void AppOpts::anchorVtable() const {}
